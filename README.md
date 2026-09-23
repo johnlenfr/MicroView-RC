@@ -4,7 +4,9 @@ DIY multi-model RC transmitter/receiver project built around a **MicroView / ATm
 
 Current reference release: **4.1.17**.
 
-![MicroView RC main screen](docs/images/main_screen.png)
+<p align="center">
+  <img src="docs/images/main_screen.png" alt="Main screen" width="250">
+</p>
 
 ## Firmware versions
 
