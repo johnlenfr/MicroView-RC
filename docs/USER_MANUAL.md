@@ -32,7 +32,9 @@ This document is the GitHub-friendly English manual for firmware **4.1.18**.
 
 ## 2. Main screen
 
-![Main screen](images/main_screen.png)
+<p align="center">
+  <img src="images/main_screen.png" alt="Main screen" width="250">
+</p>
 
 | Display element | Meaning |
 |---|---|
@@ -61,7 +63,9 @@ This document is the GitHub-friendly English manual for firmware **4.1.18**.
 
 ## 3. RF DEBUG
 
-![RF DEBUG](images/rf_debug_screen.png)
+<p align="center">
+  <img src="images/rf_debug_screen.png" alt="RF DEBUG" width="250">
+</p>
 
 The photo above comes from the preceding display layout. Version **4.1.18** keeps the 4.1.17 RF DEBUG layout: `R` remains on the `L` line, uppercase `MS` / `S` are used, and `/` separates latency from retry count.
 
@@ -117,7 +121,9 @@ L7.0MS/R5  -> several retries were required
 
 ## 4. WIRE DBG
 
-![WIRE DBG](images/wire_debug_screen.png)
+<p align="center">
+  <img src="images/wire_debug_screen.png" alt="WIRE DBG" width="250">
+</p>
 
 `WIRE DBG` diagnoses the one-wire connection between **MicroView D2** and **ATtiny85 PB4**.
 
@@ -169,7 +175,9 @@ C0/0 P00  -> all outputs OFF
 
 ## 5. SETTINGS navigation
 
-![Settings](images/settings_screen.png)
+<p align="center">
+  <img src="images/settings_screen.png" alt="Settings" width="250">
+</p>
 
 Open `SETTINGS` by holding **JR + JL** for about **0.8 s**.
 
