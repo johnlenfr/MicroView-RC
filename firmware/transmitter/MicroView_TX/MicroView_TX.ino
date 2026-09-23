@@ -38,7 +38,7 @@ D2 battery protocol:
  - debug numeric values are displayed with one decimal digit
 
 -------------------------------------------------------------------------------
- VERSION TX 4.1.17 - RF RETRY DISPLAY LAYOUT
+ VERSION TX 4.1.18 - 10 MODEL SLOTS
 -------------------------------------------------------------------------------
  Base : v3.6 / v3.5 / v3.3 pour l'ecran principal.
 
@@ -144,6 +144,7 @@ D2 battery protocol:
  - v4.1.7 : protocole alertes espace (200 us), ACK et etat PB0/PB1 separes
  - v4.1.16 : RF DEBUG R lit directement dans OBSERVE_TX.ARC_CNT pour compatibilite anciennes bibliotheques RF24
  - v4.1.17 : RF DEBUG separation visuelle compacte entre latence et retries : Lx.xMS/Rx
+ - v4.1.18 : 10 memoires MODEL01..MODEL10 cote TX (test de compilation/capacite)
 */
 
 #include <Arduino.h>
@@ -513,7 +514,7 @@ uint8_t lastAuxPreviousLatch = 0;
 bool lastAuxPressWasToggle = false;
 const unsigned long COMBO_ROLLBACK_MS = 300;
 
-// ---------------- Persistent settings / 5 models ----------------
+// ---------------- Persistent settings / 10 models ----------------
 // Fixed internal identifiers. These never change; the friendly name is only
 // the human-readable label linked to each MODELxx slot.
 enum ModelId : uint8_t {
@@ -522,12 +523,17 @@ enum ModelId : uint8_t {
   MODEL03,
   MODEL04,
   MODEL05,
+  MODEL06,
+  MODEL07,
+  MODEL08,
+  MODEL09,
+  MODEL10,
   MODEL_COUNT
 };
 
 const uint8_t MODEL_NAME_LEN = 6; // max visible friendly-name chars on main screen
-const uint16_t SETTINGS_MAGIC = 0x4D35; // "M5" = compact 5-model layout
-const uint8_t SETTINGS_VERSION = 2;
+const uint16_t SETTINGS_MAGIC = 0x4D0A; // new EEPROM layout: 10 model slots
+const uint8_t SETTINGS_VERSION = 3;
 const uint8_t SETTINGS_EXT_MARKER = 0xA1;
 const uint8_t SETTINGS_DEBUG_MARKER = 0xD7;
 const uint8_t SETTINGS_FEATURE_MARKER = 0xE3;
@@ -918,11 +924,13 @@ void resetLatencyStats() {
 }
 
 void makeModelAddress(uint8_t modelIndex, byte address[5]) {
+  // MODEL01..MODEL10 -> Rx001..Rx010
+  const uint8_t modelNumber = modelIndex + 1;
   address[0] = 'R';
   address[1] = 'x';
   address[2] = '0';
-  address[3] = '0';
-  address[4] = (byte)('1' + modelIndex);
+  address[3] = (byte)('0' + (modelNumber / 10));
+  address[4] = (byte)('0' + (modelNumber % 10));
 }
 
 void openActiveModelPipe() {
@@ -943,7 +951,7 @@ void resetLinkState() {
 
 bool bindActiveModelReceiver() {
   // Bind over the SAME normal model pipe that is already proven to work.
-  // The TX probes Rx001..Rx005 to find the single powered receiver, then tells
+  // The TX probes Rx001..Rx010 to find the single powered receiver, then tells
   // it which MODEL slot it must adopt. Keep only one RX powered while binding.
   Data_Package bindData = {};
   bindData.ch0 = BIND_MAGIC0;
@@ -1259,9 +1267,10 @@ uint16_t calTempMax[AXIS_COUNT];
 // Settings / EEPROM / model memories
 // ------------------------------------------------------------
 void makeDefaultModelName(char *dst, uint8_t modelIndex) {
+  const uint8_t modelNumber = modelIndex + 1;
   dst[0] = 'M';
-  dst[1] = '0';
-  dst[2] = (char)('1' + modelIndex);
+  dst[1] = (char)('0' + (modelNumber / 10));
+  dst[2] = (char)('0' + (modelNumber % 10));
   for (uint8_t i = 3; i <= MODEL_NAME_LEN; ++i) dst[i] = 0;
 }
 
@@ -1494,7 +1503,7 @@ void selectModel(uint8_t modelIndex) {
   ensureRxLimits(activeModel);
   applyModelToWorking(activeModel);
 
-  // Each model owns a different RF address (Rx001..Rx005). No nRF reset is
+  // Each model owns a different RF address (Rx001..Rx010). No nRF reset is
   // required: changing the writing pipe takes effect on the next transmission.
   openActiveModelPipe();
   resetLinkState();
@@ -3200,8 +3209,9 @@ void drawRootMenu() {
 }
 
 void printModelNumber(uint8_t modelIndex) {
-  uView.print('0');
-  uView.print(modelIndex + 1);
+  const uint8_t modelNumber = modelIndex + 1;
+  if (modelNumber < 10) uView.print('0');
+  uView.print(modelNumber);
 }
 
 void drawModelMenu() {
@@ -3216,8 +3226,9 @@ void drawModelSelect() {
   uView.clear(PAGE);
   uView.setCursor(14, 0); uView.print(F("SELECT"));
 
-  // With 5 models, keep four rows visible: 01..04 then 02..05.
-  const uint8_t start = (modelSelectIndex < 4) ? 0 : 1;
+  // Keep four rows visible and scroll through MODEL01..MODEL10.
+  uint8_t start = (modelSelectIndex < 4) ? 0 : (modelSelectIndex - 3);
+  if (start + 4 > MODEL_COUNT) start = MODEL_COUNT - 4;
   for (uint8_t row = 0; row < 4; ++row) {
     const uint8_t m = start + row;
     uView.setCursor(0, 10 + row * 10);

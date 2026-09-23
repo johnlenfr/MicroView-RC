@@ -1,5 +1,5 @@
 /*
-  NRF24L01 receiver v3.19a - EXTENDED ENDPOINTS + FWD THROTTLE + FULL OUTPUT MAP + BINDING + FAILSAFE
+  NRF24L01 receiver v3.20.0 - 10 MODELS + EXTENDED ENDPOINTS + FWD THROTTLE + FULL OUTPUT MAP + BINDING + FAILSAFE
   Board: Arduino Uno
 
   IMPORTANT:
@@ -39,7 +39,7 @@
       Optional: 100 nF from A0 to GND.
 
   RF parameters validated on the bench:
-      address = Rx001..Rx005 (stored model binding)
+      address = Rx001..Rx010 (stored model binding)
       channel = 76
       data rate = 250 kbps
       PA = LOW (bench test; can be raised later)
@@ -69,7 +69,7 @@
 
 // Final operational defaults:
 // - fixed 3.800 V battery telemetry test value
-// - serial debug enabled with ANSI fixed-table output
+// - serial debug disabled for normal operation
 // - 1 s failsafe: neutral steering axes, BIDIR throttle neutral / FWD throttle STOP, AUX off
 #define FAILSAFE_TIME 1000UL
 #define FAILSAFE_POT 50
@@ -124,7 +124,7 @@ const uint16_t POT_SERVO_MIN_US = 1000;
 const uint16_t POT_SERVO_MAX_US = 2000;
 
 const uint8_t RF_CHANNEL = 76;
-const uint8_t MODEL_COUNT = 5;
+const uint8_t MODEL_COUNT = 10;
 const uint8_t BIND_MAGIC0 = 0xB7;
 const uint8_t BIND_MAGIC1 = 0x42;
 const unsigned long BIND_WINDOW_MS = 30000UL;
@@ -139,11 +139,13 @@ bool bindWindowActive = true;
 unsigned long bindWindowStart = 0;
 
 void makeModelAddress(uint8_t modelIndex, byte address[5]) {
+  // MODEL01..MODEL10 -> Rx001..Rx010
+  const uint8_t modelNumber = modelIndex + 1;
   address[0] = 'R';
   address[1] = 'x';
   address[2] = '0';
-  address[3] = '0';
-  address[4] = (byte)('1' + modelIndex);
+  address[3] = (byte)('0' + (modelNumber / 10));
+  address[4] = (byte)('0' + (modelNumber % 10));
 }
 
 void saveBoundModel(uint8_t modelIndex) {
@@ -436,7 +438,7 @@ void setup() {
   Serial.begin(115200);
   delay(500);
   Serial.println();
-  Serial.println(F("RC RX v3.19a - ENDPOINTS + FWD THR + FULL OUTPUTS"));
+  Serial.println(F("RC RX v3.20.0 - 10 MODELS + ENDPOINTS + FWD THR + FULL OUTPUTS"));
   Serial.println(F("NRF: CE=D7 CSN=D8 MOSI=D3 MISO=D5 SCK=D6"));
   Serial.println(F("OUT: ROLL=D9 PITCH=D10 YAW=A3 THR=D12 | JR=D2 JL=D4 PB_R=A1 PB_L=A2"));
 #if POT_OUTPUT_MODE == POT_MODE_SERVO
@@ -444,7 +446,7 @@ void setup() {
 #else
   Serial.println(F("POT: ch0 -> D11 HW PWM 0..100% (RC filter for DC) | RX BAT=A0"));
 #endif
-  Serial.print(F("RF: bound MODEL0")); Serial.print(boundModel + 1);
+  Serial.print(F("RF: bound MODEL")); if ((boundModel + 1) < 10) Serial.print('0'); Serial.print(boundModel + 1);
   Serial.println(F(" channel=76 rate=250kbps PA=LOW"));
   Serial.println(F("BIND: normal model pipe, 30 s after startup"));
 #if RX_BATTERY_TEST_MV > 0
@@ -543,7 +545,7 @@ void loop() {
           resetData();
           everReceived = false;
 #if RX_SERIAL_DEBUG
-          Serial.print(F("BIND OK -> MODEL0")); Serial.println(boundModel + 1);
+          Serial.print(F("BIND OK -> MODEL")); if ((boundModel + 1) < 10) Serial.print('0'); Serial.println(boundModel + 1);
 #endif
         }
       } else {
