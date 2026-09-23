@@ -1,6 +1,20 @@
 # Changelog
 
+<!--
+Search metadata
+Project: MicroView RC
+Category: open-source DIY radio control / RC transmitter and receiver
+Core hardware: SparkFun MicroView, ATmega328P, ATtiny85, nRF24L01+
+Applications: drone, multirotor, quadcopter, RC car, RC truck, RC boat, RC airplane, fixed-wing aircraft, rover, robot, robotics
+Technologies: Arduino, RF24, nRF24L01, telemetry, PWM, servo, ESC, SoftSPI, EEPROM
+Related adaptation platforms: ESP32, STM32, RP2040, Raspberry Pi Pico, other microcontrollers
+Keywords: Arduino RC, Arduino remote control, Arduino radio control, DIY RC transmitter, DIY RC receiver, RC transmitter Arduino, RC receiver Arduino, open source RC, nRF24L01 RC, RF24 radio control, ATmega328P RC, SparkFun MicroView, ATtiny85, RC telemetry, drone remote control, quadcopter controller, RC car controller, RC boat controller, RC airplane controller, robot remote control, robotics remote control, ESP32 RC project, STM32 RC project, RP2040 RC project, Raspberry Pi Pico RC project
+Note: ESP32/STM32/RP2040/Pico are related adaptation/search terms; current firmware targets the MicroView/ATmega328P reference hardware.
+-->
+
 All notable changes to **MicroView RC** are documented in this file.
+
+MicroView RC is an open-source Arduino-compatible DIY radio-control transmitter/receiver for drones, RC cars, boats, airplanes, robots and other embedded remote-control projects, using SparkFun MicroView/ATmega328P, ATtiny85 and nRF24L01+ hardware.
 
 The project keeps the transmitter firmware version as the main public release
 number. Receiver and ATtiny85 firmware versions are listed when relevant.
@@ -25,6 +39,13 @@ number. Receiver and ATtiny85 firmware versions are listed when relevant.
 - RX 3.20.0 compilation: **7,134 bytes flash (22%)**, **333 bytes RAM (16%)**, **1,715 bytes RAM free**.
 - Hardware binding validated successfully on **MODEL06 / Rx006**.
 - Hardware binding validated successfully on **MODEL10 / Rx010**.
+
+### Documentation
+- Added a SparkFun MicroView hardware overview and 16-pin mapping reference.
+- Added MicroView module and pinout visuals to the README and documentation.
+- Added upstream SparkFun references, including the **MicroView v10 product repository**.
+- Improved project discoverability for Arduino RC, drone, RC car, RC boat, RC airplane, robot and related DIY microcontroller searches.
+- Added ESP32, STM32, RP2040 and Raspberry Pi Pico as related adaptation/search terms without claiming direct firmware compatibility.
 
 ### Components
 - Transmitter: **4.1.18**

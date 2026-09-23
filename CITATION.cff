@@ -1,0 +1,36 @@
+cff-version: 1.2.0
+message: "If you use MicroView RC in a project, please cite this repository."
+title: "MicroView RC"
+type: software
+version: "4.1.18"
+license: MIT
+abstract: >-
+  Open-source DIY radio-control transmitter and receiver based on a SparkFun
+  MicroView / ATmega328P transmitter, ATtiny85 supervisor and nRF24L01+ link,
+  intended for drones, RC cars, boats, airplanes, robots, rovers and custom
+  embedded remote-control projects.
+keywords:
+  - Arduino RC
+  - Arduino remote control
+  - DIY RC transmitter
+  - DIY RC receiver
+  - radio control
+  - remote control
+  - nRF24L01
+  - RF24
+  - ATmega328P
+  - ATtiny85
+  - SparkFun MicroView
+  - RC telemetry
+  - drone controller
+  - quadcopter controller
+  - RC car
+  - RC boat
+  - RC airplane
+  - robot remote control
+  - robotics
+  - embedded systems
+  - ESP32 RC adaptation
+  - STM32 RC adaptation
+  - RP2040 RC adaptation
+  - Raspberry Pi Pico RC adaptation
