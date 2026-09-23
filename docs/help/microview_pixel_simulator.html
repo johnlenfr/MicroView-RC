@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Simulateur MicroView 64x48</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; background:#111; color:#eee; }
+  .wrap { max-width:980px; margin:20px auto; padding:0 16px 24px; }
+  h1 { font-size:22px; margin:0 0 8px; }
+  p { color:#bbb; margin:0 0 14px; line-height:1.4; }
+  .toolbar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:12px 0; }
+  button, select, input { background:#222; color:#eee; border:1px solid #555; border-radius:6px; padding:8px 10px; font-size:14px; }
+  button:hover { background:#2b2b2b; }
+  button.active { outline:2px solid #59c3ff; background:#16364a; }
+  label { display:flex; align-items:center; gap:6px; color:#ccc; }
+  .panel { display:grid; grid-template-columns:minmax(0,1fr) 310px; gap:18px; align-items:start; }
+  @media (max-width:820px){ .panel{grid-template-columns:1fr;} }
+  .screenShell { background:#050505; border:1px solid #333; border-radius:10px; padding:12px; overflow:auto; }
+  canvas { display:block; background:#000; image-rendering:pixelated; cursor:crosshair; touch-action:none; }
+  .side { background:#171717; border:1px solid #333; border-radius:10px; padding:12px; }
+  .side h2 { font-size:16px; margin:0 0 8px; }
+  textarea { width:100%; box-sizing:border-box; height:220px; background:#0b0b0b; color:#b8ffb8; border:1px solid #444; border-radius:6px; padding:8px; font:12px/1.35 ui-monospace,SFMono-Regular,Consolas,monospace; }
+  .row { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin:8px 0; }
+  .row label { display:block; font-size:12px; }
+  .row input { width:100%; box-sizing:border-box; padding:6px; margin-top:3px; }
+  .status { margin-top:8px; font-family:ui-monospace,SFMono-Regular,Consolas,monospace; color:#9ad9ff; }
+  .hint { font-size:12px; color:#999; margin-top:8px; }
+  .previewBox { display:flex; gap:12px; align-items:flex-start; flex-wrap:wrap; margin-top:10px; }
+  #iconPreview { border:1px solid #555; background:#000; image-rendering:pixelated; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Simulateur / éditeur MicroView — 64×48 pixels</h1>
+  <p>Dessine directement les pixels comme sur l'OLED monochrome du MicroView. Clique-glisse pour dessiner. Clic droit ou mode Gomme pour effacer. La zone d'icône sert à exporter uniquement la batterie.</p>
+
+  <div class="toolbar">
+    <button id="pen" class="active">Crayon</button>
+    <button id="eraser">Gomme</button>
+    <button id="undo">Annuler</button>
+    <button id="clear">Effacer écran</button>
+    <button id="invert">Inverser</button>
+    <button id="quarters">Batterie 4 quarts</button>
+    <label>Zoom
+      <select id="zoom">
+        <option value="6">6×</option>
+        <option value="8" selected>8×</option>
+        <option value="10">10×</option>
+        <option value="12">12×</option>
+      </select>
+    </label>
+    <label><input type="checkbox" id="grid" checked /> grille</label>
+  </div>
+
+  <div class="panel">
+    <div class="screenShell">
+      <canvas id="screen" width="512" height="384"></canvas>
+      <div class="status" id="status">x=0 y=0</div>
+    </div>
+
+    <div class="side">
+      <h2>Zone de l'icône batterie</h2>
+      <div class="row">
+        <label>X<input id="selX" type="number" min="0" max="63" value="0"></label>
+        <label>Y<input id="selY" type="number" min="0" max="47" value="0"></label>
+        <label>L<input id="selW" type="number" min="1" max="64" value="14"></label>
+        <label>H<input id="selH" type="number" min="1" max="48" value="10"></label>
+      </div>
+      <button id="showSel">Afficher sélection</button>
+      <button id="exportSel">Exporter C</button>
+      <button id="copySel">Copier C</button>
+      <div class="previewBox">
+        <div>
+          <div class="hint">Aperçu icône</div>
+          <canvas id="iconPreview" width="140" height="100"></canvas>
+        </div>
+      </div>
+      <textarea id="out" spellcheck="false"></textarea>
+      <div class="hint">Pour me transmettre ton dessin, tu peux soit m'envoyer une capture d'écran, soit copier le tableau C généré ici.</div>
+    </div>
+  </div>
+</div>
+<script>
+(() => {
+  const W=64, H=48;
+  const pixels = new Uint8Array(W*H);
+  let history=[];
+  let mode='pen', drawing=false, showSelection=true;
+  const c=document.getElementById('screen'), ctx=c.getContext('2d');
+  const p=document.getElementById('iconPreview'), pctx=p.getContext('2d');
+  const out=document.getElementById('out');
+  const status=document.getElementById('status');
+  const grid=document.getElementById('grid');
+  const zoom=document.getElementById('zoom');
+  const sx=document.getElementById('selX'), sy=document.getElementById('selY'), sw=document.getElementById('selW'), sh=document.getElementById('selH');
+
+  function z(){return +zoom.value;}
+  function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+  function idx(x,y){return y*W+x;}
+  function save(){history.push(pixels.slice()); if(history.length>30) history.shift();}
+  function selection(){
+    const x=clamp(+sx.value||0,0,W-1), y=clamp(+sy.value||0,0,H-1);
+    const w=clamp(+sw.value||1,1,W-x), h=clamp(+sh.value||1,1,H-y);
+    return {x,y,w,h};
+  }
+  function resize(){ c.width=W*z(); c.height=H*z(); render(); }
+  function render(){
+    const Z=z(); ctx.fillStyle='#000'; ctx.fillRect(0,0,c.width,c.height);
+    ctx.fillStyle='#7FDBFF';
+    for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(pixels[idx(x,y)]) ctx.fillRect(x*Z,y*Z,Z,Z);
+    if(grid.checked){
+      ctx.strokeStyle='rgba(255,255,255,.08)'; ctx.lineWidth=1; ctx.beginPath();
+      for(let x=0;x<=W;x++){ctx.moveTo(x*Z+.5,0);ctx.lineTo(x*Z+.5,H*Z);} 
+      for(let y=0;y<=H;y++){ctx.moveTo(0,y*Z+.5);ctx.lineTo(W*Z,y*Z+.5);} ctx.stroke();
+    }
+    if(showSelection){
+      const s=selection(); ctx.strokeStyle='#ffcc00'; ctx.lineWidth=2; ctx.strokeRect(s.x*Z+1,s.y*Z+1,s.w*Z-2,s.h*Z-2);
+    }
+    renderPreview();
+  }
+  function renderPreview(){
+    const s=selection(); const scale=Math.max(1,Math.floor(Math.min(140/s.w,100/s.h)));
+    pctx.fillStyle='#000';pctx.fillRect(0,0,p.width,p.height);
+    const ox=Math.floor((p.width-s.w*scale)/2), oy=Math.floor((p.height-s.h*scale)/2);
+    pctx.fillStyle='#7FDBFF';
+    for(let y=0;y<s.h;y++) for(let x=0;x<s.w;x++) if(pixels[idx(s.x+x,s.y+y)]) pctx.fillRect(ox+x*scale,oy+y*scale,scale,scale);
+  }
+  function point(ev){
+    const r=c.getBoundingClientRect(); const X=(ev.clientX-r.left)*(c.width/r.width), Y=(ev.clientY-r.top)*(c.height/r.height);
+    return {x:clamp(Math.floor(X/z()),0,W-1), y:clamp(Math.floor(Y/z()),0,H-1)};
+  }
+  function apply(ev, forceErase=false){
+    const q=point(ev); pixels[idx(q.x,q.y)] = (forceErase || mode==='eraser') ? 0 : 1; status.textContent=`x=${q.x} y=${q.y}  pixel=${pixels[idx(q.x,q.y)]}`; render();
+  }
+  c.addEventListener('pointerdown',ev=>{ev.preventDefault();save();drawing=true;c.setPointerCapture(ev.pointerId);apply(ev,ev.button===2);});
+  c.addEventListener('pointermove',ev=>{const q=point(ev);status.textContent=`x=${q.x} y=${q.y}  pixel=${pixels[idx(q.x,q.y)]}`;if(drawing)apply(ev,(ev.buttons&2)!==0);});
+  c.addEventListener('pointerup',()=>drawing=false); c.addEventListener('pointercancel',()=>drawing=false); c.addEventListener('contextmenu',e=>e.preventDefault());
+  document.getElementById('pen').onclick=()=>{mode='pen';pen.classList.add('active');eraser.classList.remove('active');};
+  document.getElementById('eraser').onclick=()=>{mode='eraser';eraser.classList.add('active');pen.classList.remove('active');};
+  document.getElementById('undo').onclick=()=>{if(history.length){pixels.set(history.pop());render();}};
+  document.getElementById('clear').onclick=()=>{save();pixels.fill(0);render();};
+  document.getElementById('invert').onclick=()=>{save();for(let i=0;i<pixels.length;i++)pixels[i]^=1;render();};
+  document.getElementById('showSel').onclick=()=>{showSelection=!showSelection;render();};
+  zoom.onchange=resize; grid.onchange=render; [sx,sy,sw,sh].forEach(e=>e.oninput=render);
+
+  function exportC(){
+    const s=selection(); const bytesPerRow=Math.ceil(s.w/8); let vals=[];
+    for(let y=0;y<s.h;y++){
+      for(let b=0;b<bytesPerRow;b++){
+        let v=0; for(let bit=0;bit<8;bit++){const x=b*8+bit;if(x<s.w && pixels[idx(s.x+x,s.y+y)]) v|=(1<<(7-bit));}
+        vals.push('0x'+v.toString(16).padStart(2,'0').toUpperCase());
+      }
+    }
+    let lines=[]; for(let i=0;i<vals.length;i+=bytesPerRow) lines.push('  '+vals.slice(i,i+bytesPerRow).join(', '));
+    out.value=`// ${s.w}x${s.h}, 1 bit/pixel, lignes, MSB a gauche\nconst uint8_t batteryIcon[] PROGMEM = {\n${lines.join(',\n')}\n};`;
+  }
+  document.getElementById('exportSel').onclick=exportC;
+  document.getElementById('copySel').onclick=async()=>{exportC(); try{await navigator.clipboard.writeText(out.value);}catch(e){out.select();document.execCommand('copy');}};
+
+  document.getElementById('quarters').onclick=()=>{
+    save(); const s=selection();
+    // Exemple batterie pleine, sans contour: quatre blocs pleins séparés par 1 px.
+    for(let y=s.y;y<s.y+s.h;y++) for(let x=s.x;x<s.x+s.w;x++) pixels[idx(x,y)]=0;
+    const gap=1, segW=Math.max(1,Math.floor((s.w-3*gap)/4));
+    let x=s.x;
+    for(let seg=0;seg<4;seg++){
+      let w=(seg===3)?(s.x+s.w-x):segW;
+      for(let yy=s.y+1;yy<s.y+s.h-1;yy++) for(let xx=x;xx<x+w;xx++) pixels[idx(xx,yy)]=1;
+      x+=w+gap;
+    }
+    render(); exportC();
+  };
+
+  resize(); exportC();
+})();
+</script>
+</body>
+</html>
