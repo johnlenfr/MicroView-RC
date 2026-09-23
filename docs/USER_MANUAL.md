@@ -1,16 +1,16 @@
-# MicroView RC 4.1.17 User Manual
+# MicroView RC 4.1.18 User Manual
 
 **MicroView transmitter + ATtiny85 supervisor + nRF24L01+ receiver**
 
-This document is the GitHub-friendly English manual for firmware **4.1.17**.
+This document is the GitHub-friendly English manual for firmware **4.1.18**.
 
 ## Firmware versions
 
 | Module | Version | Notes |
 |---|---:|---|
-| MicroView transmitter | **4.1.17** | RF DEBUG retry counter `R`, uppercase time units, RF24-library compatibility fix, improved `L/R` layout |
+| MicroView transmitter | **4.1.18** | 10 model memories, `Rx001..Rx010` binding, RF DEBUG retry counter `R`, improved `L/R` layout |
 | ATtiny85 supervisor | **3.17.1** | TX battery monitoring, buzzer/vibration output, one-wire master/slave protocol |
-| Receiver | **3.19a** | RX telemetry through ACK payload, endpoints, failsafe and AUX outputs |
+| Receiver | **3.20.0** | 10-model binding support, RX telemetry through ACK payload, endpoints, failsafe and AUX outputs |
 
 ---
 
@@ -63,7 +63,7 @@ This document is the GitHub-friendly English manual for firmware **4.1.17**.
 
 ![RF DEBUG](images/rf_debug_screen.png)
 
-The photo above comes from the preceding display layout. Version **4.1.17** keeps `R` on the `L` line, uses uppercase `MS` / `S`, and separates latency from retry count with `/` for better readability.
+The photo above comes from the preceding display layout. Version **4.1.18** keeps the 4.1.17 RF DEBUG layout: `R` remains on the `L` line, uppercase `MS` / `S` are used, and `/` separates latency from retry count.
 
 Typical display:
 
@@ -85,9 +85,9 @@ M16.8MS
 | **M** | **Maximum** transaction duration observed since RF statistics were initialized/reset. |
 | **R** | Actual automatic retransmission count used by the latest packet. |
 
-### How `R` is obtained in 4.1.17
+### How `R` is obtained in 4.1.18
 
-Some older RF24 libraries do not provide `radio.getARC()`. Version 4.1.17 therefore reads the nRF24L01+ hardware register directly:
+Some older RF24 libraries do not provide `radio.getARC()`. Version 4.1.18 continues to read the nRF24L01+ hardware register directly:
 
 ```text
 OBSERVE_TX.ARC_CNT = OBSERVE_TX bits 3..0
@@ -230,7 +230,7 @@ SETTINGS
 
 | Menu | Scope | Choices / range |
 |---|---|---|
-| `MODEL` | Per model | 5 memories, rename, bind receiver |
+| `MODEL` | Per model | 10 memories, rename, bind receiver |
 | `EXPO` | Per model/axis | 0-70%, 5% steps |
 | `D/R` | Per model/axis | 50-100%, 5% steps |
 | `ENDPOINT` | Per model/axis | NEG/POS 50-125%, 5% steps |
@@ -257,11 +257,28 @@ MODEL01
  BIND RX
 ```
 
-- `SELECT`: choose model 01-05.
+- `SELECT`: choose model 01-10. The selector scrolls while keeping four rows visible.
 - `RENAME`: custom name up to 6 characters.
 - `BIND RX`: bind the powered receiver to the active model memory.
 
+Model/address mapping:
+
+| Model | RF address |
+|---|---|
+| MODEL01 | `Rx001` |
+| MODEL02 | `Rx002` |
+| MODEL03 | `Rx003` |
+| MODEL04 | `Rx004` |
+| MODEL05 | `Rx005` |
+| MODEL06 | `Rx006` |
+| MODEL07 | `Rx007` |
+| MODEL08 | `Rx008` |
+| MODEL09 | `Rx009` |
+| MODEL10 | `Rx010` |
+
 > Power only **one receiver** while binding.
+
+Hardware binding has been validated on **MODEL06** and **MODEL10**.
 
 ### EXPO
 
@@ -439,15 +456,16 @@ Read `L` and `R` together.
 | High `M`, moderate `A` | One or a few historical slow packets; not necessarily a continuous issue. |
 | RF icon flashes | No fresh ACK for the link timeout period. |
 
-Example observed values:
+Recent observed values with receiver Serial debug disabled:
 
 ```text
-L = 1.5 ... 7.0 MS
-A = 3.0 ... 5.0 MS
-M = 16.8 MS
+L = 1.5 MS
+R = 0 most of the time
+A = 1.5 MS
+M = 4.5 MS
 ```
 
-A maximum of 16.8 ms does **not** mean every packet takes 16.8 ms. `A` is more representative of normal operation, while `M` retains the worst observed event.
+`A` is the better indicator of normal operation, while `M` keeps the worst transaction observed since the statistics were initialized/reset.
 
 ---
 
@@ -506,16 +524,18 @@ Receiver outputs:
 
 ---
 
-## 11. What changed in 4.1.17
+## 11. What changed in 4.1.18
 
-Compared with 4.1.16:
+Compared with 4.1.17:
 
-- Improves the RF DEBUG layout from `L1.5MSR0` to `L1.5MS/R0`.
-- Keeps the `R` retry counter read directly from `OBSERVE_TX.ARC_CNT` for compatibility with older RF24 libraries.
-- Keeps `L` measured around `radio.write()` only.
-- Keeps uppercase `MS` and `S` units so no unsupported lowercase glyphs appear as `??`.
-- Keeps the 5 Hz TX-battery refresh introduced in 4.1.14.
-- RX remains **3.19a**.
+- Increases model memories from **5 to 10**: `MODEL01` through `MODEL10`.
+- Extends model-specific RF addresses to `Rx001` through `Rx010`.
+- Adds a scrolling four-row model selector for the 64-pixel display.
+- Updates the receiver to **3.20.0** so it can store and use model indexes 01 through 10.
+- Changes the TX EEPROM layout/version to hold 10 complete model profiles.
+- First boot after flashing TX 4.1.18 resets TX settings to defaults because of the new EEPROM layout.
+- Keeps the 4.1.17 RF DEBUG behavior (`L`, `A`, `M`, `R`) unchanged.
+- Hardware binding has been validated on **MODEL06** and **MODEL10**.
 - ATtiny85 remains **3.17.1**.
 
 ---
@@ -534,4 +554,21 @@ D5 = MISO
 D6 = SCK
 ```
 
-The 4.1.17 compatibility reader uses the same software-SPI pins only after `radio.write()` has completed.
+The 4.1.18 compatibility reader uses the same software-SPI pins only after `radio.write()` has completed.
+
+### Receiver 3.20.0 defaults
+
+```cpp
+#define RX_SERIAL_DEBUG 0
+#define RX_DEBUG_ANSI 1
+#define RX_BATTERY_TEST_MV 3800
+```
+
+Serial debug is disabled for normal operation. The fixed **3.800 V** telemetry value remains enabled for bench testing; set `RX_BATTERY_TEST_MV` to `0` to use the real A0 battery-divider measurement.
+
+### Build-size validation
+
+```text
+TX 4.1.18 : 25262 bytes flash (78%), 1136 bytes RAM (55%), 912 bytes RAM free
+RX 3.20.0 :  7134 bytes flash (22%),  333 bytes RAM (16%), 1715 bytes RAM free
+```

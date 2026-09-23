@@ -2,24 +2,24 @@
 
 DIY multi-model RC transmitter/receiver project built around a **MicroView / ATmega328P transmitter**, an **ATtiny85 transmitter supervisor**, and an **nRF24L01+ receiver link**.
 
-Current reference release: **4.1.17**.
+Current reference release: **4.1.18**.
 
 <p align="center">
-  <img src="docs/images/main_screen.png" alt="Main screen" width="250">
+  <img src="docs/images/main_screen.png" alt="MicroView RC main screen" width="350">
 </p>
 
 ## Firmware versions
 
 | Module | Version | Source |
 |---|---:|---|
-| MicroView transmitter | **4.1.17** | `firmware/transmitter/MicroView_TX/` |
+| MicroView transmitter | **4.1.18** | `firmware/transmitter/MicroView_TX/` |
 | ATtiny85 supervisor | **3.17.1** | `firmware/supervisor/ATtiny85_Supervisor/` |
-| Receiver | **3.19a** | `firmware/receiver/MicroView_RX/` |
+| Receiver | **3.20.0** | `firmware/receiver/MicroView_RX/` |
 
 ## Main features
 
-- 5 independent model memories (`MODEL01` ... `MODEL05`)
-- Model-specific receiver binding (`Rx001` ... `Rx005`)
+- 10 independent model memories (`MODEL01` ... `MODEL10`)
+- Model-specific receiver binding (`Rx001` ... `Rx010`)
 - 4 proportional flight controls: roll, pitch, yaw and throttle
 - Potentiometer channel plus 4 auxiliary controls
 - Per-model expo, dual rate, trim, reverse, deadband and positive/negative endpoints
@@ -87,6 +87,23 @@ The project uses an **nRF24L01+** link with software SPI.
 
 Validated radio settings in the current firmware include channel **76**, **250 kbps** data rate and automatic ACK/retries. The transmitter displays the nRF24 automatic retransmit count as `R`, read from `OBSERVE_TX.ARC_CNT` for compatibility with older RF24 libraries.
 
+### Model-specific RF addresses
+
+| Model | RF address |
+|---|---|
+| MODEL01 | `Rx001` |
+| MODEL02 | `Rx002` |
+| MODEL03 | `Rx003` |
+| MODEL04 | `Rx004` |
+| MODEL05 | `Rx005` |
+| MODEL06 | `Rx006` |
+| MODEL07 | `Rx007` |
+| MODEL08 | `Rx008` |
+| MODEL09 | `Rx009` |
+| MODEL10 | `Rx010` |
+
+Binding has been validated in hardware on **MODEL06** and **MODEL10**.
+
 > **RF24 requirement:** the project uses software SPI. Keep `SOFTSPI` enabled/configured in the RF24 library as required by the sketches.
 
 ## Receiver outputs
@@ -130,12 +147,12 @@ Before compiling:
 
 For the ATtiny85, use the selected ATTinyCore clock/BOD settings consistently. If clock/fuse settings are changed, use the core's **Burn Bootloader** operation once to program the fuses before uploading by ISP.
 
-### Receiver bench-test defaults
+### Receiver operational defaults
 
-The packaged receiver **3.19a** source currently contains bench/debug defaults including serial debug and a fixed battery telemetry test value. Review these definitions before installing the receiver in a model:
+Receiver **3.20.0** is delivered with Serial debug disabled and the fixed 3.800 V battery telemetry test value still enabled:
 
 ```cpp
-#define RX_SERIAL_DEBUG 1
+#define RX_SERIAL_DEBUG 0
 #define RX_DEBUG_ANSI 1
 #define RX_BATTERY_TEST_MV 3800
 ```
@@ -162,12 +179,12 @@ M 4.5MS
 
 ## Releases and versioning
 
-The transmitter version is used as the main public project version. Stable releases should be tagged as:
+The transmitter version is used as the main public project version. Release **4.1.18** introduces the 10-model memory/address range together with receiver **3.20.0**. Stable releases should be tagged as:
 
 ```text
-v4.1.17
 v4.1.18
 v4.1.19
+v4.1.20
 ```
 
 The receiver and ATtiny85 keep their own independent firmware versions.

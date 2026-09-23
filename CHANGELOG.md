@@ -5,6 +5,32 @@ All notable changes to **MicroView RC** are documented in this file.
 The project keeps the transmitter firmware version as the main public release
 number. Receiver and ATtiny85 firmware versions are listed when relevant.
 
+## [4.1.18] - 2026-09-23
+
+### Added
+- Increased transmitter model memories from **5 to 10**: `MODEL01` through `MODEL10`.
+- Extended model-specific RF addresses from `Rx001..Rx005` to `Rx001..Rx010`.
+- Added a scrolling four-row model selector so all 10 model memories remain readable on the 64-pixel MicroView display.
+- Added receiver **3.20.0** with binding support for model indexes 01 through 10.
+
+### Changed
+- Transmitter EEPROM layout was expanded for 10 complete model profiles.
+- The TX EEPROM magic/version was changed for the new layout; first boot after flashing 4.1.18 resets transmitter settings to defaults.
+- Receiver binding storage remains compatible with receivers already bound to MODEL01 through MODEL05.
+- RX Serial debug is disabled by default in 3.20.0.
+- RX fixed battery telemetry test value remains **3.800 V** until `RX_BATTERY_TEST_MV` is set to `0`.
+
+### Validated
+- TX 4.1.18 compilation: **25,262 bytes flash (78%)**, **1,136 bytes RAM (55%)**, **912 bytes RAM free**.
+- RX 3.20.0 compilation: **7,134 bytes flash (22%)**, **333 bytes RAM (16%)**, **1,715 bytes RAM free**.
+- Hardware binding validated successfully on **MODEL06 / Rx006**.
+- Hardware binding validated successfully on **MODEL10 / Rx010**.
+
+### Components
+- Transmitter: **4.1.18**
+- ATtiny85 supervisor: **3.17.1**
+- Receiver: **3.20.0**
+
 ## [4.1.17] - 2026-09-23
 
 ### Changed
