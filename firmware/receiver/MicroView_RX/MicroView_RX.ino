@@ -58,14 +58,14 @@
 #error "Enable #define SOFTSPI in RF24_config.h before compiling this receiver."
 #endif
 
-#define RX_SERIAL_DEBUG 1
+#define RX_SERIAL_DEBUG 0
 // 0 = normal scrolling output, compatible with Arduino Serial Monitor
 // 1 = fixed table using ANSI cursor control (PuTTY / CoolTerm / TeraTerm)
-#define RX_DEBUG_ANSI 1
+#define RX_DEBUG_ANSI 0
 
 // Set to a non-zero millivolt value to test ACK telemetry without a battery divider.
 // Example: 7400 sends a fixed 7.400 V value to the transmitter.
-#define RX_BATTERY_TEST_MV 3800
+#define RX_BATTERY_TEST_MV 0
 
 // Final operational defaults:
 // - fixed 3.800 V battery telemetry test value
