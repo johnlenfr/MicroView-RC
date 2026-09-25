@@ -242,6 +242,12 @@ The current firmware bundle is also stored in [`releases/`](releases/). For norm
 
 `hardware/schematic/` and `hardware/pcb/` are prepared for future schematic and PCB source files. They currently contain only `.gitkeep` placeholders.
 
+## PCB fabrication files
+
+Gerber files ready for PCB fabrication are available here:
+
+`hardware/pcb/gerber/MicroView_RC_Gerber.zip`
+
 ## License
 
 The project source and project-owned documentation are released under the [MIT License](LICENSE).
