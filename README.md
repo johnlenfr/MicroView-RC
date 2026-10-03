@@ -240,13 +240,19 @@ The current firmware bundle is also stored in [`releases/`](releases/). For norm
 
 ## Hardware files
 
-`hardware/schematic/` and `hardware/pcb/` are prepared for future schematic and PCB source files. They currently contain only `.gitkeep` placeholders.
+The repository includes the current PCB fabrication package under `hardware/pcb/`. The `hardware/schematic/` directory is reserved for future schematic source files.
+
+<p align="center">
+  <img src="docs/images/pcb_overview.png" alt="MicroView RC controller PCB overview" width="900">
+</p>
+
+<p align="center"><em>MicroView RC controller PCB overview.</em></p>
 
 ## PCB fabrication files
 
 Gerber files ready for PCB fabrication are available here:
 
-`hardware/pcb/gerber/MicroView_RC_Gerber.zip`
+[`hardware/pcb/Gerber_MicroviewRC_PCB_TX_MicroviewRC_2026-09-25.zip`](hardware/pcb/Gerber_MicroviewRC_PCB_TX_MicroviewRC_2026-09-25.zip)
 
 ## License
 
